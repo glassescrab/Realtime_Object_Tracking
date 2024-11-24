@@ -68,7 +68,7 @@ module USB_Driver(
     okWireIn wire13 (   .okHE(okHE), 
                         .ep_addr(8'h03), 
                         .ep_dataout(PC_val));
-    okWireIn wire13 (   .okHE(okHE), 
+    okWireIn wire14 (   .okHE(okHE), 
                         .ep_addr(8'h04), 
                         .ep_dataout(PC_pmod));
                                             

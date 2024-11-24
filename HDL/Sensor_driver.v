@@ -33,8 +33,8 @@ module Sensor_driver(
     output reg[31:0] PC_mag_y,
     output reg[31:0] PC_mag_z,
     
-    output reg ADT7420_A0,
-    output reg ADT7420_A1,
+    output wire ADT7420_A0,
+    output wire ADT7420_A1,
     
     output I2C_SCL,
     inout  I2C_SDA      
