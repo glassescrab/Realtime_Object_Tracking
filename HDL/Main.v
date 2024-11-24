@@ -18,10 +18,18 @@ module Main(
     output CVM300_SPI_CLK,
     input  CVM300_SPI_OUT,
     output CVM300_SPI_IN,
-    input CVM300_Line_valid,
-    input CVM300_Data_valid,
+    input  CVM300_Line_valid,
+    input  CVM300_Data_valid,
     input [9:0] CVM300_D,
     
+    output PMOD_A1,
+    output PMOD_A2,
+    input  PMOD_A3,
+    input  PMOD_A4,
+    output PMOD_A7,
+    output PMOD_A8,
+    input  PMOD_A9,
+    input  PMOD_A10,    
     
     input  [4:0] okUH,
     output [2:0] okHU,
@@ -44,6 +52,7 @@ module Main(
     wire [31:0]PC_command;
     wire [31:0]PC_addr;
     wire [31:0]PC_val;
+    wire [31:0]PC_pmod;
     
     wire [31:0]PC_acl_x;
     wire [31:0]PC_acl_y;
@@ -146,7 +155,21 @@ module Main(
         .I2C_SCL(I2C_SCL_1),
         .I2C_SDA(I2C_SDA_1)); 
         
+    //Instantiate the PMOD driver for motor control
+    PMOD_driver PMOD_driver(
+        .clk(clk),
         
+        .PMOD_1(PMOD_A1),
+        .PMOD_2(PMOD_A2),
+        .PMOD_3(PMOD_A3),
+        .PMOD_4(PMOD_A4),
+        .PMOD_7(PMOD_A7),
+        .PMOD_8(PMOD_A8),
+        .PMOD_9(PMOD_A9),
+        .PMOD_10(PMOD_A10),
+        .motor_fb(motor_fb),
+        .PMOD_UTIL(PMOD_UTIL)
+    );    
         
         
         

@@ -41,7 +41,7 @@ module Sensor_driver(
     );
     
     reg [31:0] PC_rx;
-    reg [31:0] PC_tx;
+    wire [31:0] PC_tx;
     reg [31:0] PC_slave_addr;
     reg [31:0] PC_addr;
     reg [31:0] PC_val;
@@ -51,6 +51,7 @@ module Sensor_driver(
     wire [1:0] next_step;
     wire ready;
     wire busy;
+    wire[9:0] cur_state;
     
     localparam read_rx  = 31'd2;
     localparam write_rx = 31'd1;
@@ -60,7 +61,7 @@ module Sensor_driver(
     localparam ctrl_reg_1_value = 31'h37;
     localparam mr_reg_m_addr  = 31'h02;
     localparam mr_reg_m_value = 31'h00;
-    localparam accel_salve_addr = 31'h32;
+    localparam accel_slave_addr = 31'h32;
     localparam magnet_slave_addr = 31'h3C;
     localparam x_a_reg_addr = 31'hA8;
     localparam y_a_reg_addr = 31'hAA;
@@ -107,8 +108,12 @@ module Sensor_driver(
         .ready(ready)
     );
     
-    reg [4:0] steps;
-    reg [14:0] HS_counter = 1;
+    reg started = 1'b0;   
+    reg [4:0] steps = 5'd0;
+    reg [9:0] cur_state_reg;
+    reg [15:0] HS_counter = 16'd1;
+    reg [15:0] program_counter = 16'd0;
+    
     
     localparam idle   = 5'b00000;
     localparam init_1 = 5'b00001;
@@ -117,11 +122,102 @@ module Sensor_driver(
     localparam read_2 = 5'b01000;
     
     always @(posedge clk) begin
-        case (cur_state) begin
+        case (steps) 
             5'b00000 : begin
-                
-                    
-     
+                PC_rx           <= 31'd0;
+                PC_slave_addr   <= 31'd0;
+                PC_addr         <= 31'd0;
+                PC_val          <= 31'd0;
+                program_counter <= 16'd0;
+                if (PC_command [0] == 1) begin
+                    started <= 1'b1;
+                    HS_counter <= 16'd1;
+                    steps <= init_1;
+                end                            
+                if (PC_command[16:0] == HS_counter && started == 1'b1) begin
+                    HS_counter <= HS_counter + 1;
+                    steps <= read_1;
+                end
+            end    
+            5'b00001 : begin
+                 case (program_counter)
+                    16'd0: begin
+                        PC_slave_addr <=  accel_slave_addr;
+                        PC_addr       <= ctrl_reg_1_addr;
+                        PC_val        <= ctrl_reg_1_value;
+                        PC_rx         <= 31'd1;
+                        steps         <= init_2;
+                        program_counter <= program_counter + 1;
+                    end
+                    16'd1: begin
+                        PC_slave_addr <= magnet_slave_addr;
+                        PC_addr       <= mr_reg_m_addr;
+                        PC_val        <= mr_reg_m_value;
+                        PC_rx         <= 31'd1;
+                        steps         <= init_2;
+                        program_counter <= program_counter + 1;
+                    end
+                    default : begin
+                        steps <= idle;
+                    end    
+                 endcase
+            end
+            5'b00010 : begin
+                PC_rx <= 31'd0;
+                cur_state_reg <= cur_state;
+                if (cur_state == 10'd0 && cur_state_reg != cur_state) begin
+                    if (program_counter == 16'd01)steps <= init_1;
+                    else steps <= idle;
+                end
+            end
+            5'b00100 : begin            
+                PC_rx <= 31'd2;
+                steps <= read_2;
+                case (program_counter)                        
+                    16'd0 : begin
+                        PC_slave_addr <= accel_slave_addr;
+                        PC_addr       <= x_a_reg_addr;
+                    end
+                    16'd1 : begin
+                        PC_slave_addr <= accel_slave_addr;
+                        PC_addr       <= y_a_reg_addr;
+                    end
+                    16'd2 : begin
+                        PC_slave_addr <= accel_slave_addr;
+                        PC_addr       <= z_a_reg_addr;
+                    end
+                    16'd3 : begin
+                        PC_slave_addr <= magnet_slave_addr;
+                        PC_addr       <= x_m_reg_addr;
+                    end
+                    16'd4 : begin
+                        PC_slave_addr <= magnet_slave_addr;
+                        PC_addr       <= y_m_reg_addr;
+                    end
+                    16'd5 : begin
+                        PC_slave_addr <= magnet_slave_addr;
+                        PC_addr       <= z_m_reg_addr;
+                    end                             
+                endcase           
+            end
+            5'b01000 : begin
+                PC_rx <= 31'd0;
+                cur_state_reg <= cur_state;
+                if (cur_state == 10'd0 && cur_state_reg != cur_state) begin
+                    case (program_counter)
+                        16'd0 : PC_acl_x <= PC_tx;
+                        16'd1 : PC_acl_y <= PC_tx;
+                        16'd2 : PC_acl_z <= PC_tx;
+                        16'd3 : PC_mag_x <= PC_tx;
+                        16'd4 : PC_mag_y <= PC_tx;
+                        16'd5 : PC_mag_z <= PC_tx;
+                    endcase
+                    if (program_counter < 16'd5) steps <= read_1;
+                    else steps <= idle;                               
+                end
+            end
+        endcase
+    end                
     
     
     

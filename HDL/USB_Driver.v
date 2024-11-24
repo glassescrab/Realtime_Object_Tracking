@@ -15,6 +15,7 @@ module USB_Driver(
     output [31:0]PC_command,
     output [31:0]PC_addr,
     output [31:0]PC_val,
+    output [31:0]PC_pmod,
     
     input [31:0]PC_acl_x,
     input [31:0]PC_acl_y,
@@ -67,6 +68,11 @@ module USB_Driver(
     okWireIn wire13 (   .okHE(okHE), 
                         .ep_addr(8'h03), 
                         .ep_dataout(PC_val));
+    okWireIn wire13 (   .okHE(okHE), 
+                        .ep_addr(8'h04), 
+                        .ep_dataout(PC_pmod));
+                                            
+                        
                         
                         
     //Wire Out//////////////////////////////////
