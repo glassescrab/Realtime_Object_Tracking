@@ -5,6 +5,10 @@ module Main(
     input sys_clkn,
     input sys_clkp,
     
+    output ADT_7420_A0,
+    output ADT_7420_A1,
+    output I2C_SCL_1,
+    inout  I2C_SDA_1,
     
     input  CVM300_CLK_OUT,  
     output CVM300_CLK_IN,
@@ -41,6 +45,13 @@ module Main(
     wire [31:0]PC_addr;
     wire [31:0]PC_val;
     
+    wire [31:0]PC_acl_x;
+    wire [31:0]PC_acl_y;
+    wire [31:0]PC_acl_z;
+    wire [31:0]PC_mag_x;
+    wire [31:0]PC_mag_y;
+    wire [31:0]PC_mag_z;
+     
     wire FIFO_wr_clk;
     wire FIFO_wr_enable;
     wire [31:0]FIFO_data_in;
@@ -74,6 +85,13 @@ module Main(
         .FIFO_full(FIFO_full),
         .FIFO_BT(FIFO_BT),
         .FIFO_read_enable(FIFO_read_enable),
+        
+        .PC_acl_x(PC_acl_x),
+        .PC_acl_y(PC_acl_y),
+        .PC_acl_z(PC_acl_z),
+        .PC_mag_x(PC_mag_x),
+        .PC_mag_y(PC_mag_y),
+        .PC_mag_z(PC_mag_z),
         
         .USB_ready(USB_ready));
 
@@ -109,13 +127,30 @@ module Main(
         .FIFO_BT(FIFO_BT),
         
         .USB_ready(USB_ready));
-    //Instantiate the ILA module
-    ila_0 ila_sample12 ( 
+        
+    // Instantiate the Sensor Driver for magnetic and acceleration module
+    Sensor_driver Sensor_driver(
         .clk(clk),
-        .probe0({CVM300_D,CVM300_Line_valid,CVM300_Data_valid,CVM300_CLK_OUT}),
-        .probe1(CVM300_FRAME_REQ),
-        .probe2(FIFO_BT),
-        .probe3(FIFO_read_enable),
-        .probe4(FIFO_wr_enable),
-        .probe5(USB_ready));
+        
+        .PC_command(PC_command),    
+        .PC_acl_x(PC_acl_x),        
+        .PC_acl_y(PC_acl_y),
+        .PC_acl_z(PC_acl_z),
+        .PC_mag_x(PC_mag_x),
+        .PC_mag_y(PC_mag_y),
+        .PC_mag_z(PC_mag_z),
+        
+        .ADT7420_A0(ADT7420_A0),
+        .ADT7420_A1(ADT7420_A1),
+        
+        .I2C_SCL(I2C_SCL_1),
+        .I2C_SDA(I2C_SDA_1)); 
+        
+        
+        
+        
+        
+        
+    //Instantiate the ILA module
+
 endmodule

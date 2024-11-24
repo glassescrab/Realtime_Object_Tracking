@@ -16,6 +16,13 @@ module USB_Driver(
     output [31:0]PC_addr,
     output [31:0]PC_val,
     
+    input [31:0]PC_acl_x,
+    input [31:0]PC_acl_y,
+    input [31:0]PC_acl_z,
+    input [31:0]PC_mag_x,
+    input [31:0]PC_mag_y,
+    input [31:0]PC_mag_z,
+    
     input   FIFO_wr_clk,
     input   FIFO_read_reset,
     input   FIFO_write_reset,
@@ -43,7 +50,7 @@ module USB_Driver(
         
     //Depending on the number of outgoing endpoints, adjust endPt_count accordingly.
     //In this example, we have 1 output endpoints, hence endPt_count = 1.
-    localparam  endPt_count = 2;
+    localparam  endPt_count = 8;
     wire [endPt_count*65-1:0] okEHx;  
     okWireOR # (.N(endPt_count)) wireOR (okEH, okEHx);    
                                                                       
@@ -66,8 +73,43 @@ module USB_Driver(
     okWireOut wire20 (  .okHE(okHE), 
                         .okEH(okEHx[ 0*65 +: 65 ]),
                         .ep_addr(8'h20), 
-                        .ep_datain(PC_tx));  
+                        .ep_datain(PC_tx));
+                        
+    okWireOut wire21 (  .okHE(okHE), 
+                        .okEH(okEHx[ 2*65 +: 65 ]),
+                        .ep_addr(8'h21), 
+                        .ep_datain(PC_acl_x));                    
+                          
+    okWireOut wire22 (  .okHE(okHE), 
+                        .okEH(okEHx[ 3*65 +: 65 ]),
+                        .ep_addr(8'h22), 
+                        .ep_datain(PC_acl_y));
    
+    okWireOut wire23 (  .okHE(okHE), 
+                        .okEH(okEHx[ 4*65 +: 65 ]),
+                        .ep_addr(8'h23), 
+                        .ep_datain(PC_acl_z));
+   
+    okWireOut wire24 (  .okHE(okHE), 
+                        .okEH(okEHx[ 5*65 +: 65 ]),
+                        .ep_addr(8'h24), 
+                        .ep_datain(PC_mag_x));                    
+                          
+    okWireOut wire25 (  .okHE(okHE), 
+                        .okEH(okEHx[ 6*65 +: 65 ]),
+                        .ep_addr(8'h25), 
+                        .ep_datain(PC_mag_y));
+   
+    okWireOut wire26 (  .okHE(okHE), 
+                        .okEH(okEHx[ 7*65 +: 65 ]),
+                        .ep_addr(8'h26), 
+                        .ep_datain(PC_mag_z));                    
+                        
+                        
+                        
+                        
+                        
+                        
     wire [31:0] FIFO_data_out;
     wire prog_full;
     fifo_generator_0 FIFO_for_Counter_BTPipe_Interface (
