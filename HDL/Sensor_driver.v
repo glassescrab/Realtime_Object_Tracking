@@ -134,7 +134,7 @@ module Sensor_driver(
                     HS_counter <= 16'd1;
                     steps <= init_1;
                 end                            
-                if (PC_command[16:0] == HS_counter && started == 1'b1) begin
+                if (PC_command[16:1] == HS_counter && started == 1'b1) begin
                     HS_counter <= HS_counter + 1;
                     steps <= read_1;
                 end
