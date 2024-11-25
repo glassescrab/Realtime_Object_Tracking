@@ -5,8 +5,8 @@ module Main(
     input sys_clkn,
     input sys_clkp,
     
-    output ADT_7420_A0,
-    output ADT_7420_A1,
+    output ADT7420_A0,
+    output ADT7420_A1,
     output I2C_SCL_1,
     inout  I2C_SDA_1,
     
@@ -85,6 +85,7 @@ module Main(
         .PC_command(PC_command),
         .PC_addr(PC_addr),
         .PC_val(PC_val),
+        .PC_pmod(PC_pmod),
         
         .FIFO_wr_clk(FIFO_wr_clk),
         .FIFO_read_reset(FIFO_read_reset),
@@ -105,7 +106,7 @@ module Main(
         .USB_ready(USB_ready));
 
 
-    
+    wire FRAME_REQ;
     // PC communication////////////////////////////////////////////////////////////////
     CVM300_driver CVM300_driver (
         .clk(clk),
@@ -134,10 +135,13 @@ module Main(
         .FIFO_data_in(FIFO_data_in),
         .FIFO_full(FIFO_full),
         .FIFO_BT(FIFO_BT),
+        .FRAME_REQ(FRAME_REQ),
         
         .USB_ready(USB_ready));
         
     // Instantiate the Sensor Driver for magnetic and acceleration module
+    wire[4:0] debug_I2C_c_state;
+    wire[9:0] debug_sensor_state;
     Sensor_driver Sensor_driver(
         .clk(clk),
         
@@ -153,7 +157,11 @@ module Main(
         .ADT7420_A1(ADT7420_A1),
         
         .I2C_SCL(I2C_SCL_1),
-        .I2C_SDA(I2C_SDA_1)); 
+        .I2C_SDA(I2C_SDA_1),
+        
+        .debug_I2C_c_state(debug_I2C_c_state),
+        .debug_sensor_state(debug_sensor_state)
+        ); 
         
     //Instantiate the PMOD driver for motor control
     PMOD_driver PMOD_driver(
@@ -168,9 +176,22 @@ module Main(
         .PMOD_9(PMOD_A9),
         .PMOD_10(PMOD_A10),
         .motor_fb(motor_fb),
-        .PMOD_UTIL(PMOD_UTIL)
-    );    
+        .PMOD_UTIL(PC_pmod)
+    );
+    
+     
+    ila_0 ILA(
+        .clk(clk),
         
+        .probe0({I2C_SCL_1, FRAME_REQ}),
+        .probe1({CVM300_SPI_OUT,CVM300_SPI_IN}),
+        .probe2(CVM300_D),
+        .probe3(PC_acl_x),
+        .probe4(PC_command),
+        .probe5(debug_I2C_c_state),
+        .probe6(debug_sensor_state),
+        .probe7(PC_acl_y)
+        );    
         
         
         

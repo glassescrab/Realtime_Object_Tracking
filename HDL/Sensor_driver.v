@@ -37,7 +37,10 @@ module Sensor_driver(
     output wire ADT7420_A1,
     
     output I2C_SCL,
-    inout  I2C_SDA      
+    inout  I2C_SDA,
+    
+    output wire[4:0] debug_sensor_state,
+    output wire[9:0] debug_I2C_c_state      
     );
     
     reg [31:0] PC_rx;
@@ -78,8 +81,8 @@ module Sensor_driver(
         .clk(clk),
         .ADT7420_A0(ADT7420_A0),
         .ADT7420_A1(ADT7420_A1),
-        .I2C_SCL_0(I2C_SCL_1),
-        .I2C_SDA_0(I2C_SDA_1),             
+        .I2C_SCL_0(I2C_SCL),
+        .I2C_SDA_0(I2C_SDA),             
 
         .ACK(ACK),
         .SCL(SCL),
@@ -204,6 +207,7 @@ module Sensor_driver(
                 PC_rx <= 31'd0;
                 cur_state_reg <= cur_state;
                 if (cur_state == 10'd0 && cur_state_reg != cur_state) begin
+                    program_counter <= program_counter + 1;
                     case (program_counter)
                         16'd0 : PC_acl_x <= PC_tx;
                         16'd1 : PC_acl_y <= PC_tx;
@@ -221,5 +225,8 @@ module Sensor_driver(
     
     
     
+    //debug
+    assign debug_sensor_state = steps;
+    assign debug_I2C_c_state = cur_state;
     
 endmodule

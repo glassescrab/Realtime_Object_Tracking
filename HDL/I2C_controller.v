@@ -30,7 +30,7 @@ module I2C_controller(
     output reg [31:0] PC_tx,
     output reg [1:0] next_step,
     output reg [7:0] tx_byte,
-    output reg [9:0] cur_state,
+    output reg [8:0] cur_state,
     output reg [7:0] PC_rx_reg1,
     output reg [7:0] PC_rx_reg2,
     input wire [7:0] rx_byte,
@@ -46,15 +46,15 @@ module I2C_controller(
     reg tx_flag;
     reg byte2_flag;
     
-    localparam idle_     = 9'b000000001;
-    localparam start_wr  = 9'b000000010;
-    localparam tx_wr     = 9'b000000100;
-    localparam end_wr    = 9'b000001000;
-    localparam start_rt  = 9'b000010000;
-    localparam tx_rt     = 9'b000100000;
-    localparam rstart_rt = 9'b001000000;
-    localparam rx_rt     = 9'b010000000;
-    localparam end_rt    = 9'b100000000;
+    localparam idle_     = 8'b00000000;
+    localparam start_wr  = 8'b00000001;
+    localparam tx_wr     = 8'b00000010;
+    localparam end_wr    = 8'b00000100;
+    localparam start_rt  = 8'b00001000;
+    localparam tx_rt     = 8'b00010000;
+    localparam rstart_rt = 8'b00100000;
+    localparam rx_rt     = 8'b01000000;
+    localparam end_rt    = 8'b10000000;
     
     localparam ns_start  = 2'b01;
     localparam ns_tx     = 2'b10;

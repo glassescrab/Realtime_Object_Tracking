@@ -1,9 +1,7 @@
 import time   # time related library
-import sys,os    # system related library
-import numpy as np
-import matplotlib.pyplot as plt
-import ok     # OpalKelly library
 import pyvisa as visa # You should pip install pyvisa and restart the kernel.
+import numpy as np
+import cv2
 
 
 def reset_sensors(dev):
@@ -45,62 +43,55 @@ def SPI_read_from_device(dev, reg_addr):
 def setup_sensors(dev):
     print("setting up...")
     reset_sensors(dev)
-    SPI_write_to_device(3, 8, dev)
-    SPI_write_to_device(4, 160, dev)
-    SPI_write_to_device(57, 3, dev)
-    SPI_write_to_device(58, 44, dev)
-    SPI_write_to_device(59, 240, dev)
-    SPI_write_to_device(60, 10, dev)
-    SPI_write_to_device(69, 9, dev)
-    SPI_write_to_device(80, 2, dev)
-    SPI_write_to_device(83, 187, dev)
-    SPI_write_to_device(97, 240, dev)
-    SPI_write_to_device(98, 10, dev)
-    SPI_write_to_device(100, 112, dev)
-    SPI_write_to_device(101, 98, dev)
-    SPI_write_to_device(102, 34, dev)
-    SPI_write_to_device(103, 64, dev)
-    SPI_write_to_device(106, 94, dev)
-    SPI_write_to_device(107, 110, dev)
-    SPI_write_to_device(108, 91, dev)
-    SPI_write_to_device(109, 82, dev)
-    SPI_write_to_device(110, 80, dev)
-    SPI_write_to_device(117, 91, dev)
+    SPI_write_to_device(dev, 3, 8)
+    SPI_write_to_device(dev, 4, 160)
+    SPI_write_to_device(dev, 57, 3)
+    SPI_write_to_device(dev, 58, 44)
+    SPI_write_to_device(dev, 59, 240)
+    SPI_write_to_device(dev, 60, 10)
+    SPI_write_to_device(dev, 69, 9)
+    SPI_write_to_device(dev, 80, 2)
+    SPI_write_to_device(dev, 83, 187)
+    SPI_write_to_device(dev, 97, 240)
+    SPI_write_to_device(dev, 98, 10)
+    SPI_write_to_device(dev, 100, 112)
+    SPI_write_to_device(dev, 101, 98)
+    SPI_write_to_device(dev, 102, 34)
+    SPI_write_to_device(dev, 103, 64)
+    SPI_write_to_device(dev, 106, 94)
+    SPI_write_to_device(dev, 107, 110)
+    SPI_write_to_device(dev, 108, 91)
+    SPI_write_to_device(dev, 109, 82)
+    SPI_write_to_device(dev, 110, 80)
+    SPI_write_to_device(dev, 117, 91)
     print("setting up done")
 
 def read_a_frame(dev, HS_counter):
+    width, height = 648, 486    # Define image dimensions
     buf = bytearray(315392)
     dev.SetWireInValue(0x01, HS_counter)
     dev.UpdateWireIns()
     dev.ReadFromBlockPipeOut(0xa0, 1024, buf)
+    arr = np.frombuffer(buf, dtype=np.uint8, count=314928)
+    arr = arr.reshape(height, width)
+    arr = cv2.cvtColor(arr,cv2.COLOR_GRAY2RGB)
     read_output = I2C_read_from_device(dev)
-    # x_a_read = read_output[0]
-    # print("x-acceleration read is " + str(x_a_read / 16000) + " g")
-    # y_a_read = read_output[1]
-    # print("y-acceleration read is " + str(y_a_read / 16000) + " g")
-    # z_a_read = read_output[2]
-    # print("z-acceleration read is " + str(z_a_read / 16000) + " g")
-    # x_m_read = read_output[3]
-    # print("x-magnetic read is " + str(x_m_read))
-    # y_m_read = read_output[4]
-    # print("y-magnetic read is " + str(y_m_read))
-    # z_m_read = read_output[5]
-    # print("z-magnetic read is " + str(z_m_read))
-    return buf, read_output
+    return arr, read_output
 
 # dir = 0 => forward, dir = 1 => backward
+# motor running time = duration / 200 seconds
 def run_motor(dev, direction, duration):
     pmod_util = duration + 3 * 2 ** 30
     pmod_util = pmod_util + (3 * direction) * 2 ** 28
     dev.SetWireInValue(0x04, pmod_util)
     dev.UpdateWireIns()
-    time.sleep(0.2)
+    time.sleep(0.001)
     dev.SetWireInValue(0x04, 0)
     dev.UpdateWireIns()
 
 def I2C_read_from_device(dev):
     dev.UpdateWireOuts()
-    read_output = (0,0,0,0,0,0)
+    read_output = [0,0,0,0,0,0]
     for i in range(6):
         read = dev.GetWireOutValue(0x21 + i)
         if i >= 3:

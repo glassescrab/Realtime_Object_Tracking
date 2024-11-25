@@ -46,6 +46,8 @@ module CVM300_driver(
     output  FIFO_write_reset,
     output  FIFO_wr_enable,
     output  [31:0]FIFO_data_in,
+    output  FRAME_REQ,
+    
     input   FIFO_full, // currently not used
     input   FIFO_BT,
     
@@ -119,6 +121,7 @@ module CVM300_driver(
     reg started = 0;
     reg frame_request = 0;
     reg [15:0] HS_counter = 0;
+    assign FRAME_REQ = frame_request;
     always @(posedge CVM_Clk) begin        
         if (PC_command[0] == 1) begin
             reset <= 1;
