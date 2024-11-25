@@ -52,15 +52,25 @@ def main():
     x_a_list = np.array([])
     y_a_list = np.array([])
     z_a_list = np.array([])
+    z_a_list_max = np.array([])
+    z_a_list_min = np.array([])
     x_m_list = np.array([])
     y_m_list = np.array([])
     z_m_list = np.array([])
     output_voltage = np.arange(3, 5.5, 0.5)
     power_supply.write("OUTPUT ON")
     for v in output_voltage:
-        power_supply.write("APPLy P6V, %0.2f, 0.1" % v)
-        util.run_motor(dev, 1, 400)
-        time.sleep(1)
+        power_supply.write("APPLy P6V, %0.2f, 1" % v)
+        util.run_motor(dev, 1, 300)
+        time.sleep(0.1)
+        z_list = np.array([])
+        for i in range(10):
+            time.sleep(0.1)
+            HS_counter = HS_counter + 2
+            arr, read_output = util.read_a_frame(dev, HS_counter)
+            z_a_read = read_output[1]
+            z_list = np.append(z_list, z_a_read)
+        
         HS_counter = HS_counter + 2
         arr, read_output = util.read_a_frame(dev, HS_counter)
         x_a_read = read_output[0]
@@ -83,8 +93,10 @@ def main():
 
         #print("y-magnetic read is " + str(y_m_read))
         z_m_read = read_output[5]
-        z_m_list = np.append(z_m_list, z_m_read)
-        time.sleep(1)
+        z_m_list = np.append(z_m_list, np.mean(z_list))
+        z_a_list_max = np.append(z_a_list_max, np.max(z_list))
+        z_a_list_min = np.append(z_a_list_min, np.min(z_list))
+        time.sleep(2)
         #print("z-magnetic read is " + str(z_m_read))
         # Display result
         #if i == 50:
@@ -97,7 +109,7 @@ def main():
         #cv2.waitKey(1)
     #print("x acceleration reading mean: ", np.mean(x_a_list))
     #print("y acceleration reading mean: ", np.mean(y_a_list))
-    print("z acceleration reading mean: ", np.mean(z_a_list))
+    #print("z acceleration reading mean: ", np.mean(z_a_list))
     #print("x magnetic reading mean: ", np.mean(x_m_list))
     #print("y magnetic reading mean: ", np.mean(y_m_list))
     #print("z magnetic reading mean: ", np.mean(z_m_list))
@@ -110,7 +122,21 @@ def main():
     #print("temporal noise: ", np.std(intencities_50_50))
     plt.figure()
     plt.plot(output_voltage, z_a_list)
-    plt.title("Applied Volts vs. Measured Acceleration")
+    plt.title("Applied Volts vs. average Acceleration")
+    plt.xlabel("Applied Volts [V]")
+    plt.ylabel("Measured Acceleration [g]")
+    plt.draw()
+    plt.show()
+    plt.figure()
+    plt.plot(output_voltage, z_a_list_max)
+    plt.title("Applied Volts vs. max Acceleration")
+    plt.xlabel("Applied Volts [V]")
+    plt.ylabel("Measured Acceleration [g]")
+    plt.draw()
+    plt.show()
+    plt.figure()
+    plt.plot(output_voltage, z_a_list_min)
+    plt.title("Applied Volts vs. min Acceleration")
     plt.xlabel("Applied Volts [V]")
     plt.ylabel("Measured Acceleration [g]")
     plt.draw()
