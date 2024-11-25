@@ -6,6 +6,10 @@ import time   # time related library
 import sys,os    # system related library
 import util
 import cv2
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
 ok_sdk_loc = "C:\\Program Files\\Opal Kelly\\FrontPanelUSB\\API\\Python\\x64"
 ok_dll_loc = "C:\\Program Files\\Opal Kelly\\FrontPanelUSB\\API\\lib\\x64"
 sys.path.append(ok_sdk_loc)   # add the path of the OK library
@@ -38,55 +42,79 @@ def main():
         print ("FrontPanel host interface not detected. The error code number is:" + str(int(SerialStatus)))
         print("Exiting the program.")
         sys.exit()
-    # power_supply = util.instrumentation_setup()
+    power_supply = util.instrumentation_setup()
     width, height = 648, 486    # Define image dimensions
     HS_counter = 0
     time.sleep(1)
     util.setup_sensors(dev)
-    HS_counter = HS_counter + 2
-    arr, output = util.read_a_frame(dev, HS_counter)
-    roi = cv2.selectROI(arr, False)    
     # Initialize KCF Tracker and Start Tracking
-    tracker = cv2.legacy.TrackerKCF_create()   # Create a KCF Tracker
-    flag = tracker.init(arr, roi)   # Initialize KCF Tracker with grayscale image and ROI
-    last_time = 0;
-    while (True):
-        
+    intencities_50_50 = np.array([])
+    x_a_list = np.array([])
+    y_a_list = np.array([])
+    z_a_list = np.array([])
+    x_m_list = np.array([])
+    y_m_list = np.array([])
+    z_m_list = np.array([])
+    output_voltage = np.arange(3, 5.5, 0.5)
+    power_supply.write("OUTPUT ON")
+    for v in output_voltage:
+        power_supply.write("APPLy P6V, %0.2f, 0.1" % v)
+        util.run_motor(dev, 1, 400)
+        time.sleep(1)
         HS_counter = HS_counter + 2
         arr, read_output = util.read_a_frame(dev, HS_counter)
         x_a_read = read_output[0]
-        print("x-acceleration read is " + str(x_a_read / 16000) + " g")
+        x_a_list = np.append(x_a_list, x_a_read)
+        #print("x-acceleration read is " + str(x_a_read / 16000) + " g")
         y_a_read = read_output[1]
-        print("y-acceleration read is " + str(y_a_read / 16000) + " g")
+        y_a_list = np.append(y_a_list, y_a_read)
+
+        #print("y-acceleration read is " + str(y_a_read / 16000) + " g")
         z_a_read = read_output[2]
-        print("z-acceleration read is " + str(z_a_read / 16000) + " g")
+        z_a_list = np.append(z_a_list, z_a_read)
+
+        #print("z-acceleration read is " + str(z_a_read / 16000) + " g")
         x_m_read = read_output[3]
-        print("x-magnetic read is " + str(x_m_read))
+        x_m_list = np.append(x_m_list, x_m_read)
+
+        #print("x-magnetic read is " + str(x_m_read))
         y_m_read = read_output[4]
-        print("y-magnetic read is " + str(y_m_read))
+        y_m_list = np.append(y_m_list, y_m_read)
+
+        #print("y-magnetic read is " + str(y_m_read))
         z_m_read = read_output[5]
-        print("z-magnetic read is " + str(z_m_read))
-        flag, roi = tracker.update(arr)
-        if not(flag):
-            print("Tracking failure")
-            # cv2.putText(frame,"Tracking failure occured!",(10,30),cv2.FONT_HERSHEY_DUPLEX,0.75,(0,255,0),2)
-        p1 = (int(roi[0]), int(roi[1]))
-        p2 = (int(roi[0] + roi[2]), int(roi[1] + roi[3]))
-        print(roi[0] + roi[2] / 2)
-        current_time = time.time()
-        if roi[0] + roi[2] / 2 > width / 2 + 50:
-            print("forward")
-            util.run_motor(dev, 0, 10)
-        elif roi[0] + roi[2] / 2 < width / 2 - 50:
-            util.run_motor(dev, 1, 10)
-            print("backward")
-        else:
-            util.run_motor(dev, 0, 0)
-            print("stable")
-        cv2.rectangle(arr, p1, p2, (255, 0, 0), 2, 1)
+        z_m_list = np.append(z_m_list, z_m_read)
+        time.sleep(1)
+        #print("z-magnetic read is " + str(z_m_read))
         # Display result
-        cv2.imshow("image tracking", arr)
-        cv2.waitKey(1)
+        #if i == 50:
+        #    print("standard deviation: ", np.std(arr))
+        #    print("mean: ", np.mean(arr))
+        #    print("spatial noise: ", np.std(arr) / np.mean(arr))
+        #    print("SNR: ", 20 * np.log10(np.mean(arr) / np.std(arr)), " dB")
+        #intencities_50_50 = np.append(intencities_50_50, arr[50][50])
+        #cv2.imshow("image tracking", arr)
+        #cv2.waitKey(1)
+    #print("x acceleration reading mean: ", np.mean(x_a_list))
+    #print("y acceleration reading mean: ", np.mean(y_a_list))
+    print("z acceleration reading mean: ", np.mean(z_a_list))
+    #print("x magnetic reading mean: ", np.mean(x_m_list))
+    #print("y magnetic reading mean: ", np.mean(y_m_list))
+    #print("z magnetic reading mean: ", np.mean(z_m_list))
+    #print("x acceleration reading noise: ", np.std(x_a_list))
+    #print("y acceleration reading noise: ", np.std(y_a_list))
+    #print("z acceleration reading noise: ", np.std(z_a_list))
+    #print("x magnetic reading noise: ", np.std(x_m_list))
+    #print("y magnetic reading noise: ", np.std(y_m_list))
+    #print("z magnetic reading noise: ", np.std(z_m_list))
+    #print("temporal noise: ", np.std(intencities_50_50))
+    plt.figure()
+    plt.plot(output_voltage, z_a_list)
+    plt.title("Applied Volts vs. Measured Acceleration")
+    plt.xlabel("Applied Volts [V]")
+    plt.ylabel("Measured Acceleration [g]")
+    plt.draw()
+    plt.show()
     dev.Close
 
 # def reading_thread(dev):

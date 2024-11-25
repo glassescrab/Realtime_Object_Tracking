@@ -136,7 +136,7 @@ module USB_Driver(
         .okHE(okHE), 
         .okEH(okEHx[ 1*65 +: 65 ]),
         .ep_addr(8'ha0), 
-        .ep_datain(FIFO_data_out), 
+        .ep_datain({FIFO_data_out[7:0], FIFO_data_out[15:8], FIFO_data_out[23:16], FIFO_data_out[31:24]}), 
         .ep_read(FIFO_read_enable),
         .ep_blockstrobe(FIFO_BT), 
         .ep_ready(prog_full)
